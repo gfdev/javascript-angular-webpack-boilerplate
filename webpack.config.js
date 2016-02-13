@@ -2,26 +2,26 @@ var pkg = require('./package.json')
     , webpack = require('webpack')
     , HtmlWebpackPlugin = require('html-webpack-plugin')
     , ExtractTextPlugin = require("extract-text-webpack-plugin")
-    , autoprefixer = require('autoprefixer')
-    , src = __dirname + '/src'
     , NODE_ENV = process.env.NODE_ENV || 'development'
+    , src = __dirname + '/src'
+    , isDev = NODE_ENV === 'development'
 ;
 
 module.exports = {
     context: src,
-    devtool: NODE_ENV === 'development' ? 'cheap-source-map' : null,
-    watch:  NODE_ENV === 'development',
+    devtool: isDev ? 'cheap-source-map' : null,
+    watch:  isDev,
     entry: {
         app: '../index',
         vendor: './vendor'
     },
-    output: NODE_ENV === 'development'
+    output: isDev
         ? { path: __dirname + '/build', filename: '[name].js', publickPath: '/' }
         : { path: __dirname + '/dist', filename: '[name].[hash].js' },
     resolve: {
         root: src,
         extensions: [ '', '.js', '.jsx' ],
-        modulesDirectories: [ 'node_modules' ]
+        modulesDirectories: [ 'node_modules', 'bower_components' ]
     },
     devServer: {
         host: '0.0.0.0',
@@ -52,17 +52,13 @@ module.exports = {
         }),
         new webpack.optimize.CommonsChunkPlugin({
             name: [ 'vendor' ],
-            filename: '[name]' + (NODE_ENV === 'development' ? '' : '.[hash]') + '.js'
+            filename: '[name]' + (isDev ? '' : '.[hash]') + '.js'
         }),
         new HtmlWebpackPlugin({
             name: pkg.name,
-            title: pkg.description,
             template: 'index.tmpl',
             inject: 'body'
         }),
-        new ExtractTextPlugin('[name]' + (NODE_ENV === 'development' ? '' : '.[contenthash]') + '.css', { allChunks: true })
-    ].concat(NODE_ENV !== 'development'
-        ? new webpack.optimize.UglifyJsPlugin({ compress: { warnings: false }})
-        : []
-    )
+        new ExtractTextPlugin('[name]' + (isDev ? '' : '.[contenthash]') + '.css', { allChunks: true })
+    ].concat(isDev ? new webpack.optimize.UglifyJsPlugin({ compress: { warnings: false }}) : [])
 };
